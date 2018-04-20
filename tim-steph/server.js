@@ -44,7 +44,7 @@ app.post('/articles', bodyParser, (request, response) => {
     //Insertion into author --table (author, "authorUrl")
     `INSERT INTO authors(author, "authorUrl")
     VALUES ($1, $2)
-    ON CONFLICT do nothing;
+    ON CONFLICT DO NOTHING;
     `,
     [
       request.body.author,
@@ -62,11 +62,11 @@ app.post('/articles', bodyParser, (request, response) => {
     client.query(
       //In the second query, add the SQL commands to retrieve a single author from the authors table. Add the author name as data for the query.
       // Selection from Author table and sending into articles table (bundling)
-      `SELECT author_id 
-      FROM authors 
-      INTO articles`,
+      `SELECT author_id
+      FROM authors
+      WHERE "authorUrl"=$1;`,
       [
-        request.body.author_id
+        request.body.authorUrl
       ],
       function(err, result) {
         if (err) console.error(err);
@@ -80,9 +80,17 @@ app.post('/articles', bodyParser, (request, response) => {
   function queryThree(author_id) {
     client.query(
       //In the third query, add the SQL commands to insert the new article using the author_id from the second query. Add the data from the new article, including the author_id, as data for the SQL query.
-      // Take from previous two queries and insert into articles table
-      `///////////////////////`,
-      [],
+      // Take from previous two queries and insert into articles table (do the big one here)
+      `INSERT INTO articles(author_id, title, category, "publishedOn", body) 
+      VALUES($1, $2, $3, $4, $5);
+      `,
+      [
+        author_id,
+        request.body.title,
+        request.body.category,
+        request.body.publishedOn,
+        request.body.body,
+      ],
       function(err) {
         if (err) console.error(err);
         response.send('insert complete');
@@ -95,14 +103,29 @@ app.put('/articles/:id', function(request, response) {
   client.query(
     //Write a SQL query to update an author record and article record.
     //Remember that the articles now have an author_id property, so we can reference it from the //request.body. Add the required values from the request as data for the SQL query to interpolate.
-    `//////////////////`,
-    []
+    `UPDATE authors
+    SET author=$1, authorUrl=$2 
+    WHERE author_id=$3`,
+    [
+      request.body.author,
+      request.body.authorUrl,
+      request.body.author_id
+    ]
   )
     .then(() => {
       client.query(
         //After the author has been updated, you will then need to update an article record. Remember that the article records now have an author_id, in addition to title, category, publishedOn, and body. Add the required values from the request as data for the SQL query to interpolate.
-        `/////////////////////////`,
-        []
+        `UPDATE articles
+        SET author_id=$1, title=$2, category=$3, "publishedOn"=$4, body=$5
+        WHERE article_id=$6`,
+        [
+          request.body.author_id,
+          request.body.title,
+          request.category,
+          request.body.publishedOn,
+          request.body.body,
+          request.body.id
+        ]
       )
     })
     .then(() => {
