@@ -80,6 +80,7 @@ app.post('/articles', bodyParser, (request, response) => {
   function queryThree(author_id) {
     client.query(
       //In the third query, add the SQL commands to insert the new article using the author_id from the second query. Add the data from the new article, including the author_id, as data for the SQL query.
+
       // Take from previous two queries and insert into articles table (do the big one here)
       `INSERT INTO articles(author_id, title, category, "publishedOn", body) 
       VALUES($1, $2, $3, $4, $5);
@@ -103,13 +104,18 @@ app.put('/articles/:id', function(request, response) {
   client.query(
     //Write a SQL query to update an author record and article record.
     //Remember that the articles now have an author_id property, so we can reference it from the //request.body. Add the required values from the request as data for the SQL query to interpolate.
-    `UPDATE authors
-    SET author=$1, authorUrl=$2 
-    WHERE author_id=$3`,
+    `UPDATE articles
+    SET 
+    title=$1, author=$2, "authorUrl"=$3, category=$4, "publishedOn"=$5, body=$6
+      WHERE article_id=$7;`,
     [
+      request.body.title,
       request.body.author,
       request.body.authorUrl,
-      request.body.author_id
+      request.body.category,
+      request.body.publishedOn,
+      request.body.body,
+      request.params.id
     ]
   )
     .then(() => {
